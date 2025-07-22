@@ -1,0 +1,6 @@
+aws_region           = "eu-south-1"
+vpc_cidr             = "10.0.0.0/16"
+public_subnet_cidr   = "10.0.1.0/24"
+private_subnet_cidr  = "10.0.2.0/24"
+az_1                 = "eu-south-1a"
+az_2                 = "eu-south-1b"
