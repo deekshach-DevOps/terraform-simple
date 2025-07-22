@@ -7,7 +7,8 @@ variables:
   - group: aws-credentials
 
 pool:
-  name: self-hosted 
+  name: self-hosted
+
 stages:
   - stage: Terraform_Apply
     jobs:
@@ -24,11 +25,32 @@ stages:
           - powershell: |
               $env:AWS_ACCESS_KEY_ID = "$(AWS_ACCESS_KEY_ID)"
               $env:AWS_SECRET_ACCESS_KEY = "$(AWS_SECRET_ACCESS_KEY)"
+              $env:AWS_SESSION_TOKEN = "$(AWS_SESSION_TOKEN)"
               $env:AWS_REGION = "$(AWS_REGION)"
 
+              Write-Host "Using AWS_REGION: $env:AWS_REGION"
               terraform version
               terraform init
               terraform validate
               terraform plan -var-file="terraform.tfvars"
               terraform apply -auto-approve -var-file="terraform.tfvars"
-            displayName: 'Run Terraform'
+            displayName: 'Run Terraform with SSO credentials'
+
+  - stage: Terraform_Destroy
+    dependsOn: Terraform_Apply  
+    condition: succeeded()
+    jobs:
+      - job: Destroy
+        steps:
+          - checkout: self
+
+          - powershell: |
+              $env:AWS_ACCESS_KEY_ID = "$(AWS_ACCESS_KEY_ID)"
+              $env:AWS_SECRET_ACCESS_KEY = "$(AWS_SECRET_ACCESS_KEY)"
+              $env:AWS_SESSION_TOKEN = "$(AWS_SESSION_TOKEN)"
+              $env:AWS_REGION = "$(AWS_REGION)"
+
+              Write-Host "Starting Terraform destroy..."
+              terraform init
+              terraform destroy -auto-approve -var-file="terraform.tfvars"
+            displayName: 'Terraform Destroy'
